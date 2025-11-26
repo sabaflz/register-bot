@@ -50,8 +50,12 @@ func (t *Task) DoReq(req *http.Request, stage string, useDefaultResponseHandling
 	var resp *http.Response
 	resp, err := t.Client.Do(req)
 
+	if err != nil {
+		return resp, err
+	}
+
 	if useDefaultResponseHandling {
-		if resp.StatusCode >= 400 && resp.StatusCode <= 499 || resp.StatusCode >= 500 {
+		if resp != nil && (resp.StatusCode >= 400 && resp.StatusCode <= 499 || resp.StatusCode >= 500) {
 			body, _ := readBody(resp)
 			reader := strings.NewReader(string(body))
 			document, err := goquery.NewDocumentFromReader(reader)

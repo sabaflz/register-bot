@@ -27,8 +27,14 @@ func (t *Task) CheckEnrollmentData(CRN string) error {
 	response, err := t.DoReq(t.MakeReq("POST", "https://reg.oci.fhda.edu/StudentRegistrationSsb/ssb/searchResults/getEnrollmentInfo", headers, []byte(values.Encode())), fmt.Sprintf("Getting Enrollment Data (%s)", CRN), true)
 	if err != nil {
 		fmt.Println(err)
-		discardResp(response)
+		if response != nil {
+			discardResp(response)
+		}
 		return err
+	}
+
+	if response == nil {
+		return fmt.Errorf("received nil response")
 	}
 
 	body, _ := readBody(response)

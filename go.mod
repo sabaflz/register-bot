@@ -5,12 +5,12 @@ go 1.22.0
 toolchain go1.22.10
 
 require (
+	github.com/PuerkitoBio/goquery v1.9.0
 	github.com/bogdanfinn/fhttp v0.5.30
 	github.com/bogdanfinn/tls-client v1.7.10
 )
 
 require (
-	github.com/PuerkitoBio/goquery v1.9.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/bogdanfinn/utls v1.6.2 // indirect
