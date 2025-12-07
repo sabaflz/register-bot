@@ -1,4 +1,4 @@
-module veil-v2
+module register-bot
 
 go 1.22.0
 

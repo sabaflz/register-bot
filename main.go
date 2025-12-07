@@ -9,23 +9,23 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"register-bot/tasks"
 	"strings"
 	"time"
-	"veil-v2/tasks"
 
 	tls_client "github.com/bogdanfinn/tls-client"
 	"github.com/bogdanfinn/tls-client/profiles"
 )
 
-// loadCredentials reads username and password from .credentials file
-func loadCredentials() (string, string) {
+// loadCredentials reads username, password, and webhook from .credentials file
+func loadCredentials() (string, string, string) {
 	file, err := os.Open(".credentials")
 	if err != nil {
-		return "", ""
+		return "", "", ""
 	}
 	defer file.Close()
 
-	var username, password string
+	var username, password, webhook string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -33,10 +33,12 @@ func loadCredentials() (string, string) {
 			username = strings.TrimPrefix(line, "username=")
 		} else if strings.HasPrefix(line, "password=") {
 			password = strings.TrimPrefix(line, "password=")
+		} else if strings.HasPrefix(line, "webhook=") {
+			webhook = strings.TrimPrefix(line, "webhook=")
 		}
 	}
 
-	return username, password
+	return username, password, webhook
 }
 
 func main() {
@@ -82,7 +84,7 @@ func main() {
 	}
 
 	// Load credentials once (priority: env vars > credentials file)
-	credUsername, credPassword := loadCredentials()
+	credUsername, credPassword, credWebhook := loadCredentials()
 	for {
 		row, err := reader.Read()
 		if err != nil {
@@ -93,32 +95,44 @@ func main() {
 			}
 			break
 		}
-		if len(row) < 8 {
+		if len(row) < 5 {
 			fmt.Println("Invalid Configuration File")
 			continue
 		}
-		// Read username and password with priority: env vars > credentials file > CSV
-		if envUsername := os.Getenv("VEIL_USERNAME"); envUsername != "" {
+		// Read username and password with priority: env vars > credentials file
+		if envUsername := os.Getenv("REGISTER_BOT_USERNAME"); envUsername != "" {
 			t.Username = envUsername
 		} else if credUsername != "" {
 			t.Username = credUsername
 		} else {
-			t.Username = row[0]
+			fmt.Println("Error: Username not found in environment variables or .credentials file")
+			continue
 		}
 
-		if envPassword := os.Getenv("VEIL_PASSWORD"); envPassword != "" {
+		if envPassword := os.Getenv("REGISTER_BOT_PASSWORD"); envPassword != "" {
 			t.Password = envPassword
 		} else if credPassword != "" {
 			t.Password = credPassword
 		} else {
-			t.Password = row[1]
+			fmt.Println("Error: Password not found in environment variables or .credentials file")
+			continue
 		}
-		t.GetTermByName(row[2])
-		t.Subject = row[3]
-		t.Mode = row[4]
-		t.CRNs = strings.Split(row[5], ",")
-		t.WebhookURL = row[6]
-		var registrationTime = row[7]
+
+		// Read webhook from credentials file or environment variable
+		if envWebhook := os.Getenv("REGISTER_BOT_WEBHOOK"); envWebhook != "" {
+			t.WebhookURL = envWebhook
+		} else if credWebhook != "" {
+			t.WebhookURL = credWebhook
+		} else {
+			t.WebhookURL = "" // Webhook is optional
+		}
+
+		// Read other settings from CSV (Term, Subject, Mode, CRNs, SavedRegistrationTime)
+		t.GetTermByName(row[0])
+		t.Subject = row[1]
+		t.Mode = row[2]
+		t.CRNs = strings.Split(row[3], ",")
+		var registrationTime = row[4]
 
 		if t.Mode == "Release" {
 			t.Mode = "Signup"

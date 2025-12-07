@@ -171,7 +171,7 @@ func (t *Task) Check() error {
 	}
 
 	fullName := getSelectorAttr(document, "meta[name='fullName']", "content")
-	fmt.Printf("Welcome to Veil, %s.\n", fullName)
+	fmt.Printf("Welcome to Register Bot, %s.\n", fullName)
 	return nil
 }
 

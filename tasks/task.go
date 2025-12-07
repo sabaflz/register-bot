@@ -74,13 +74,13 @@ func (t *Task) DoReq(req *http.Request, stage string, useDefaultResponseHandling
 
 func (t *Task) SendNotification(action string, message string) {
 	payload := WebhookPayload{
-		Username: "veil-v2",
+		Username: "register-bot",
 		Embeds: []Embed{
 			{
 				Title:       action,
 				Description: message,
 				Footer: &Footer{
-					Text: "veil-v2",
+					Text: "register-bot",
 				},
 				Timestamp: time.Now().UTC().Format("2006-01-02T15:04:05.000Z"),
 			},
