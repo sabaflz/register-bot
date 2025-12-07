@@ -54,19 +54,19 @@ go mod tidy
 ```
 
 ### 3️⃣ Configure `settings.csv`
-1. Copy the example file: `cp settings.csv.example settings.csv`
-2. Edit the `settings.csv` file to match your preferences (see **[Configuration](#configuration)** for details).
-3. **⚠️ IMPORTANT:** Never commit `settings.csv` to git - it contains sensitive credentials!
+1. Copy the example file: `cp config/examples/settings.csv.example config/settings.csv`
+2. Edit the `config/settings.csv` file to match your preferences (see **[Configuration](#configuration)** for details).
+3. **⚠️ IMPORTANT:** Never commit `config/settings.csv` to git - it contains sensitive credentials!
 
 ---
 
 ## Configuration
 
-To function correctly, Register Bot requires a properly configured **`settings.csv`** file.
+To function correctly, Register Bot requires a properly configured **`config/settings.csv`** file.
 
 ### 🔒 Security: Protecting Your Credentials
 
-**Never commit your `settings.csv` or `.credentials` files to git!** They contain sensitive information.
+**Never commit your `config/settings.csv` or `config/.credentials` files to git!** They contain sensitive information.
 
 Register Bot supports three methods for providing your username and password (in priority order):
 
@@ -84,12 +84,12 @@ REGISTER_BOT_USERNAME="your_student_id" REGISTER_BOT_PASSWORD="your_password" go
 ```
 
 #### Method 2: Credentials File (Recommended for Convenience) ⭐
-Create a `.credentials` file in the project root:
+Create a `config/.credentials` file:
 ```sh
-cp .credentials.example .credentials
+cp config/examples/.credentials.example config/.credentials
 ```
 
-Then edit `.credentials` and add your credentials:
+Then edit `config/.credentials` and add your credentials:
 ```
 username=your_student_id
 password=your_password
@@ -99,9 +99,9 @@ webhook=https://discord.com/api/webhooks/YOUR_WEBHOOK_URL_HERE
 This file is automatically gitignored, so you only need to set it up once and it will persist across sessions.
 
 #### Method 3: settings.csv (Fallback)
-If neither environment variables nor `.credentials` file are used, Register Bot will read from `settings.csv`. Make sure this file is in your `.gitignore` (it already is by default).
+If neither environment variables nor `config/.credentials` file are used, Register Bot will read from `config/settings.csv`. Make sure this file is in your `.gitignore` (it already is by default).
 
-**Note:** Even when using environment variables or `.credentials`, you still need `settings.csv` for other configuration (Term, Subject, Mode, CRNs, SavedRegistrationTime). Username, Password, and Webhook are now stored in `.credentials` for security.
+**Note:** Even when using environment variables or `config/.credentials`, you still need `config/settings.csv` for other configuration (Term, Subject, Mode, CRNs, SavedRegistrationTime). Username, Password, and Webhook are now stored in `config/.credentials` for security.
 
 ### `settings.csv` Parameters
 
@@ -113,12 +113,12 @@ If neither environment variables nor `.credentials` file are used, Register Bot 
 | `CRNs`              | Course Reference Numbers                      | `47520,44412,41846`                       |
 | `SavedRegistrationTime` | Registration time (auto-updated)       | *(Do not edit manually)*                  |
 
-**Note:** Username, Password, and Webhook are now stored in `.credentials` file (see [Security section](#-security-protecting-your-credentials) above).
+**Note:** Username, Password, and Webhook are now stored in `config/.credentials` file (see [Security section](#-security-protecting-your-credentials) above).
 
 #### Setting Up a Discord Webhook  
 Follow this guide: [How to Create a Discord Webhook](https://hookdeck.com/webhooks/platforms/how-to-get-started-with-discord-webhooks).
 
-#### Editing `settings.csv`  
+#### Editing `config/settings.csv`  
 Use a spreadsheet editor like [Ron's Editor](https://www.ronsplace.ca/products/ronseditor) or **Google Sheets** for easy modifications.
 
 ---
@@ -128,7 +128,7 @@ Use a spreadsheet editor like [Ron's Editor](https://www.ronsplace.ca/products/r
 To compile Register Bot, run:
 
 ```sh
-bash build.sh
+bash scripts/build.sh
 ```
 
 ---
@@ -144,7 +144,7 @@ go run .
 Or, if you've compiled it:
 
 ```sh
-./register-bot
+./bin/register-bot
 ```
 
 ---
@@ -165,7 +165,7 @@ Or, if you've compiled it:
 
 ### 📌 Scenario 1: Auto-Enrollment on Registration Day  
 I want Register Bot to **automatically enroll** me when my registration opens.  
-1. Set `Mode` to **`Signup`** and fill in `settings.csv`.  
+1. Set `Mode` to **`Signup`** and fill in `config/settings.csv`.  
 2. To fully automate registration, first run **Signup** or **Release** mode to save the registration time.  
 3. The program will **sleep** until 5 minutes before your registration time, then attempt to enroll you.  
 
@@ -173,7 +173,7 @@ I want Register Bot to **automatically enroll** me when my registration opens.
 
 ### 📌 Scenario 2: Monitoring a Waitlisted Class  
 I want to enroll in a class but the **waitlist is full**!  
-1. Set `Mode` to **`Watch`** in `settings.csv`.  
+1. Set `Mode` to **`Watch`** in `config/settings.csv`.  
 2. Run Register Bot – it will continuously check for openings.  
 3. Once a **waitlist spot** is available, **Watch mode** will initiate a **Signup** task to enroll you.  
 

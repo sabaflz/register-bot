@@ -9,7 +9,7 @@ import (
 	"net"
 	"os"
 	"regexp"
-	"register-bot/tasks"
+	"register-bot/internal/tasks"
 	"strings"
 	"time"
 
@@ -19,7 +19,7 @@ import (
 
 // loadCredentials reads username, password, and webhook from .credentials file
 func loadCredentials() (string, string, string) {
-	file, err := os.Open(".credentials")
+	file, err := os.Open("config/.credentials")
 	if err != nil {
 		return "", "", ""
 	}
@@ -68,7 +68,7 @@ func main() {
 	}
 	t.Client, _ = tls_client.NewHttpClient(tls_client.NewLogger(), client_options...)
 
-	file, err := os.Open("settings.csv")
+	file, err := os.Open("config/settings.csv")
 	if err != nil {
 		fmt.Println("Error Opening File:", err)
 		return
@@ -139,7 +139,8 @@ func main() {
 			pattern := regexp.MustCompile(`\d{2}/\d{2}/\d{4} \d{2}:\d{2} [APM]{2}`)
 			matches := pattern.FindAllString(registrationTime, -1)
 			if len(matches) == 0 {
-				fmt.Printf("Invalid Registration Time Format")
+				fmt.Printf("Invalid Registration Time Format\n")
+				continue
 			}
 
 			location, _ := time.LoadLocation("America/Los_Angeles")
