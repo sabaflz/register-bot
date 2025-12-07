@@ -54,7 +54,9 @@ go mod tidy
 ```
 
 ### 3️⃣ Configure `settings.csv`
-Edit the `settings.csv` file to match your preferences (see **[Configuration](#configuration)** for details).
+1. Copy the example file: `cp settings.csv.example settings.csv`
+2. Edit the `settings.csv` file to match your preferences (see **[Configuration](#configuration)** for details).
+3. **⚠️ IMPORTANT:** Never commit `settings.csv` to git - it contains sensitive credentials!
 
 ---
 
@@ -62,12 +64,50 @@ Edit the `settings.csv` file to match your preferences (see **[Configuration](#c
 
 To function correctly, Veil requires a properly configured **`settings.csv`** file.
 
+### 🔒 Security: Protecting Your Credentials
+
+**Never commit your `settings.csv` or `.credentials` files to git!** They contain sensitive information.
+
+Veil supports three methods for providing your username and password (in priority order):
+
+#### Method 1: Environment Variables (Highest Priority)
+Set these environment variables before running Veil:
+```sh
+export VEIL_USERNAME="your_student_id"
+export VEIL_PASSWORD="your_password"
+go run .
+```
+
+Or in a single command:
+```sh
+VEIL_USERNAME="your_student_id" VEIL_PASSWORD="your_password" go run .
+```
+
+#### Method 2: Credentials File (Recommended for Convenience) ⭐
+Create a `.credentials` file in the project root:
+```sh
+cp .credentials.example .credentials
+```
+
+Then edit `.credentials` and add your credentials:
+```
+username=your_student_id
+password=your_password
+```
+
+This file is automatically gitignored, so you only need to set it up once and it will persist across sessions.
+
+#### Method 3: settings.csv (Fallback)
+If neither environment variables nor `.credentials` file are used, Veil will read from `settings.csv`. Make sure this file is in your `.gitignore` (it already is by default).
+
+**Note:** Even when using environment variables or `.credentials`, you still need `settings.csv` for other configuration (Term, Subject, Mode, CRNs, Webhook, etc.). Just leave the Username and Password fields empty or use placeholders in `settings.csv`.
+
 ### `settings.csv` Parameters
 
 | Parameter             | Description                                      | Example Value                              |
 |----------------------|------------------------------------------------|-------------------------------------------|
-| `Username`           | Your FHDA student ID                          | `00000000`                                |
-| `Password`           | Your FHDA password                            | `TestTestPassword123`                     |
+| `Username`           | Your FHDA student ID (or use `VEIL_USERNAME` env var) | `00000000` or leave empty if using env vars |
+| `Password`           | Your FHDA password (or use `VEIL_PASSWORD` env var) | `TestTestPassword123` or leave empty if using env vars |
 | `Term`              | The academic term                              | `2025 Winter De Anza`                     |
 | `Subject`           | Subject for class search                      | `MATH`                                    |
 | `Mode`              | Task type (e.g., `Signup`, `Watch`)            | `Signup`                                  |

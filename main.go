@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/csv"
 	"fmt"
@@ -15,6 +16,28 @@ import (
 	tls_client "github.com/bogdanfinn/tls-client"
 	"github.com/bogdanfinn/tls-client/profiles"
 )
+
+// loadCredentials reads username and password from .credentials file
+func loadCredentials() (string, string) {
+	file, err := os.Open(".credentials")
+	if err != nil {
+		return "", ""
+	}
+	defer file.Close()
+
+	var username, password string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(line, "username=") {
+			username = strings.TrimPrefix(line, "username=")
+		} else if strings.HasPrefix(line, "password=") {
+			password = strings.TrimPrefix(line, "password=")
+		}
+	}
+
+	return username, password
+}
 
 func main() {
 	var dnsServers = []string{"8.8.8.8", "8.8.4.4", "1.1.1.1", "1.0.0.1"}
@@ -57,6 +80,9 @@ func main() {
 		fmt.Println("Error Reading Header:", err)
 		return
 	}
+
+	// Load credentials once (priority: env vars > credentials file)
+	credUsername, credPassword := loadCredentials()
 	for {
 		row, err := reader.Read()
 		if err != nil {
@@ -71,8 +97,22 @@ func main() {
 			fmt.Println("Invalid Configuration File")
 			continue
 		}
-		t.Username = row[0]
-		t.Password = row[1]
+		// Read username and password with priority: env vars > credentials file > CSV
+		if envUsername := os.Getenv("VEIL_USERNAME"); envUsername != "" {
+			t.Username = envUsername
+		} else if credUsername != "" {
+			t.Username = credUsername
+		} else {
+			t.Username = row[0]
+		}
+
+		if envPassword := os.Getenv("VEIL_PASSWORD"); envPassword != "" {
+			t.Password = envPassword
+		} else if credPassword != "" {
+			t.Password = credPassword
+		} else {
+			t.Password = row[1]
+		}
 		t.GetTermByName(row[2])
 		t.Subject = row[3]
 		t.Mode = row[4]
