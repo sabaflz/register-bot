@@ -154,9 +154,9 @@ func formatDuration(time time.Duration) string {
 }
 
 func saveRegistrationTime(registrationTime string) {
-	file, err := os.Open("settings.csv")
+	file, err := os.Open("config/settings.csv")
 	if err != nil {
-		fmt.Println("Error Opening settings.csv:", err)
+		fmt.Println("Error Opening config/settings.csv:", err)
 		return
 	}
 	defer file.Close()
@@ -164,7 +164,7 @@ func saveRegistrationTime(registrationTime string) {
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	if err != nil {
-		fmt.Println("Error Reading settings.csv:", err)
+		fmt.Println("Error Reading config/settings.csv:", err)
 		return
 	}
 
@@ -180,7 +180,7 @@ func saveRegistrationTime(registrationTime string) {
 	}
 
 	if !found {
-		fmt.Println("SavedRegistrationTime field not found in settings.csv")
+		fmt.Println("SavedRegistrationTime field not found in config/settings.csv")
 		return
 	}
 
@@ -192,7 +192,7 @@ func saveRegistrationTime(registrationTime string) {
 		records[i][timeIndex] = registrationTime
 	}
 
-	outputFile, err := os.Create("settings.csv")
+	outputFile, err := os.Create("config/settings.csv")
 	if err != nil {
 		fmt.Println("Error creating file:", err)
 		return
@@ -202,7 +202,7 @@ func saveRegistrationTime(registrationTime string) {
 	writer := csv.NewWriter(outputFile)
 	err = writer.WriteAll(records)
 	if err != nil {
-		fmt.Println("Error writing settings.csv :", err)
+		fmt.Println("Error writing config/settings.csv :", err)
 		return
 	}
 
