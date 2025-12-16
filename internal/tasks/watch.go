@@ -84,11 +84,10 @@ func (t *Task) CheckEnrollmentData(CRN string) error {
 		t.Signup()
 		return nil
 	} else {
-		if numEnrollmentSeatsAvailable >= 1 && numWaitlistSeatsAvailable == 0 {
-			fmt.Printf("[%s] - (Waitlist Opening Soon)\n", CRN)
-		} else {
-			fmt.Printf("[%s] - (Not Available)\n", CRN)
-		}
+		// No seats available - continue monitoring
+		// Since hasEnrollmentSeat is false, we know numEnrollmentSeatsAvailable <= 0
+		// Show status message with current availability
+		fmt.Printf("[%s] - (Not Available - Enrollment: %s, Waitlist: %s)\n", CRN, enrollmentSeatsAvailable, waitlistSeatsAvailable)
 		time.Sleep(5 * time.Second)
 		return t.CheckEnrollmentData(CRN)
 	}
