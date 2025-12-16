@@ -216,6 +216,11 @@ func saveRegistrationTime(registrationTime string) {
 }
 
 func (t *Task) Run() {
+	// Default to Watch mode if Mode is empty or not recognized
+	if t.Mode == "" {
+		t.Mode = "Watch"
+	}
+
 	if t.Mode == "Signup" {
 		t.Signup()
 	} else if t.Mode == "Classes" {
@@ -224,6 +229,11 @@ func (t *Task) Run() {
 		t.HomepageURL = "https://dw-prod.ec.fhda.edu/responsiveDashboard/worksheets/WEB31"
 		t.Transcript()
 	} else if t.Mode == "Watch" {
+		t.Watch()
+	} else {
+		// Unknown mode, default to Watch
+		fmt.Printf("Unknown mode '%s', defaulting to Watch mode\n", t.Mode)
+		t.Mode = "Watch"
 		t.Watch()
 	}
 }

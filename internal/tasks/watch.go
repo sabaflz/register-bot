@@ -64,21 +64,33 @@ func (t *Task) CheckEnrollmentData(CRN string) error {
 	numWaitlistActual, _ := strconv.Atoi(waitlistActual)
 	numWaitlistSeatsAvailable, _ := strconv.Atoi(waitlistSeatsAvailable)
 
-	if numWaitlistCapacity > numWaitlistActual && (numWaitlistSeatsAvailable > 0) || (numEnrollmentSeatsAvailable > 0 && numWaitlistSeatsAvailable > 0) {
-		t.SendNotification("Watch Task", fmt.Sprintf("[%s] %s Waitlist spot(s) is now Available", CRN, waitlistSeatsAvailable))
-		t.WaitlistTask = true
+	// Auto-enroll if ANY seat is available (enrollment OR waitlist)
+	hasEnrollmentSeat := numEnrollmentSeatsAvailable > 0
+	hasWaitlistSeat := numWaitlistCapacity > numWaitlistActual && numWaitlistSeatsAvailable > 0
+
+	if hasEnrollmentSeat || hasWaitlistSeat {
+		var message string
+		if hasEnrollmentSeat {
+			message = fmt.Sprintf("[%s] %s Enrollment seat(s) is now Available - Auto-enrolling!", CRN, enrollmentSeatsAvailable)
+			t.WaitlistTask = false
+		} else {
+			message = fmt.Sprintf("[%s] %s Waitlist spot(s) is now Available - Auto-enrolling!", CRN, waitlistSeatsAvailable)
+			t.WaitlistTask = true
+		}
+		
+		t.SendNotification("Watch Task - Seat Available", message)
+		fmt.Println(message)
 		t.CRNs = []string{CRN}
 		t.Signup()
+		return nil
 	} else {
-		if numEnrollmentSeatsAvailable >= 1 && numWaitlistSeatsAvailable == 0 {
-			fmt.Printf("[%s] - (Waitlist Opening Soon)\n", CRN)
-		} else {
-			fmt.Printf("[%s] - (Not Available)\n", CRN)
-		}
+		// No seats available - continue monitoring
+		// Since hasEnrollmentSeat is false, we know numEnrollmentSeatsAvailable <= 0
+		// Show status message with current availability
+		fmt.Printf("[%s] - (Not Available - Enrollment: %s, Waitlist: %s)\n", CRN, enrollmentSeatsAvailable, waitlistSeatsAvailable)
 		time.Sleep(5 * time.Second)
 		return t.CheckEnrollmentData(CRN)
 	}
-	return nil
 }
 
 func (t *Task) Watch() error {
