@@ -24,6 +24,7 @@ type TaskConfig struct {
 	Subject           string
 	Mode              string
 	CRNs              []string
+	DropCRNs          []string
 	RegistrationTime  string
 	Username          string
 	Password          string
@@ -93,7 +94,13 @@ func parseCSVRow(row []string, credUsername, credPassword, credWebhook string) (
 		Subject:          row[1],
 		Mode:             strings.TrimSpace(row[2]),
 		CRNs:             strings.Split(strings.Trim(row[3], "\""), ","),
+		DropCRNs:         []string{}, // Default empty
 		RegistrationTime: row[4],
+	}
+
+	// Check if there's a 6th column for DropCRNs
+	if len(row) >= 6 {
+		config.DropCRNs = strings.Split(strings.Trim(row[5], "\""), ",")
 	}
 
 	// Clean up CRNs (remove empty strings)
@@ -105,6 +112,16 @@ func parseCSVRow(row []string, credUsername, credPassword, credWebhook string) (
 		}
 	}
 	config.CRNs = cleanCRNs
+
+	// Clean up DropCRNs
+	var cleanDropCRNs []string
+	for _, crn := range config.DropCRNs {
+		crn = strings.TrimSpace(crn)
+		if crn != "" {
+			cleanDropCRNs = append(cleanDropCRNs, crn)
+		}
+	}
+	config.DropCRNs = cleanDropCRNs
 
 	// Set default mode to Watch if empty
 	if config.Mode == "" {
@@ -159,6 +176,7 @@ func runTask(config *TaskConfig) {
 		Subject:    config.Subject,
 		Mode:       config.Mode,
 		CRNs:       config.CRNs,
+		DropCRNs:   config.DropCRNs,
 	}
 
 	// Get term ID

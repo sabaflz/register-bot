@@ -24,6 +24,7 @@ type Task struct {
 	Password      string
 	Subject       string
 	CRNs          []string
+	DropCRNs      []string
 	TermID        string
 	UserAgent     string
 	Client        tls_client.HttpClient

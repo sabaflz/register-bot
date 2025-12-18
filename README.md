@@ -26,7 +26,9 @@ Updated for new MyPortal changes.
 ✅ **Class Search & Export** – Search for classes and export results in CSV format.  
 ✅ **Unofficial Transcript** – Retrieve and export previously enrolled courses.  
 ✅ **Automated Enrollment** – Enroll in classes at lightning speed.  
-✅ **Class Monitoring** – Watch class enrollment, get notified of open spots, and auto-enroll in waitlisted courses.  
+✅ **Class Monitoring & Auto-Enrollment** – Watch class enrollment, get notified of open spots, and auto-enroll immediately.  
+✅ **Drop & Add (Swapping)** – Automatically drop one course while adding another in a single transaction.
+✅ **Multi-College Support** – Run tasks for De Anza and Foothill simultaneously.
 
 ---
 
@@ -112,6 +114,7 @@ If neither environment variables nor `config/.credentials` file are used, Regist
 | `Mode`              | Task type (e.g., `Signup`, `Watch`)            | `Signup`                                  |
 | `CRNs`              | Course Reference Numbers                      | `47520,44412,41846`                       |
 | `SavedRegistrationTime` | Registration time (auto-updated)       | *(Do not edit manually)*                  |
+| `DropCRNs`          | CRNs to drop before registering (optional)    | `32425`                                   |
 
 **Note:** Username, Password, and Webhook are now stored in `config/.credentials` file (see [Security section](#-security-protecting-your-credentials) above).
 

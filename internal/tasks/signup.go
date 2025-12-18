@@ -14,7 +14,7 @@ import (
 
 type SignupSession struct {
 	SAMLRequest string
-	Model       map[string]interface{}
+	Models      []map[string]interface{}
 }
 
 func (t *Task) CheckAuthSession() error {
@@ -270,26 +270,75 @@ func (t *Task) AddCourse(course string) error {
 	}
 	if addCourse.Success {
 		model, err := extractModel([]byte(body))
-		model["selectedAction"] = "WL"
 		if err != nil {
 			return err
 		}
-		t.Session.SignupSession.Model = model
+		// Use "WL" for waitlist if requested, otherwise "RW" for regular registration
+		if t.WaitlistTask {
+			model["selectedAction"] = "WL"
+		} else {
+			model["selectedAction"] = "RW"
+		}
+		t.Session.SignupSession.Models = append(t.Session.SignupSession.Models, model)
 	} else {
 		fmt.Printf("Error Adding Course (%s) - %s\n", course, addCourse.Message)
 	}
 	return nil
 }
 
+func (t *Task) DropCourse(course string) error {
+	headers := [][2]string{
+		{"accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"},
+		{"accept-language", "en-US,en;q=0.9"},
+		{"user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"},
+	}
+
+	// FHDA uses the same endpoint to "add" a course to the worksheet before submitting.
+	// We need to get the model for the existing course to drop it.
+	response, err := t.DoReq(t.MakeReq("GET", fmt.Sprintf("https://reg.oci.fhda.edu/StudentRegistrationSsb/ssb/classRegistration/addRegistrationItem?term=%s&courseReferenceNumber=%s&olr=false", t.TermID, course), headers, nil), fmt.Sprintf("Preparing to Drop Course (%s)", course), true)
+	if err != nil {
+		discardResp(response)
+		return err
+	}
+	body, _ := readBody(response)
+	addCourse := AddCourse{}
+
+	if err := json.Unmarshal(body, &addCourse); err != nil {
+		return err
+	}
+
+	if addCourse.Success {
+		model, err := extractModel([]byte(body))
+		if err != nil {
+			return err
+		}
+		model["selectedAction"] = "DW" // DW is typically the code for Web Drop
+		t.Session.SignupSession.Models = append(t.Session.SignupSession.Models, model)
+		fmt.Printf("Prepared to drop course %s\n", course)
+	} else {
+		fmt.Printf("Error preparing to drop course (%s) - %s\n", course, addCourse.Message)
+	}
+	return nil
+}
+
 func (t *Task) AddCourses() error {
+	// First handle any drops
+	for _, course := range t.DropCRNs {
+		err := t.DropCourse(course)
+		if err != nil {
+			fmt.Printf("Warning: Failed to prepare drop for %s: %v\n", course, err)
+		}
+	}
+
+	// Then handle adds
 	for _, course := range t.CRNs {
 		err := t.AddCourse(course)
 		if err != nil {
 			return err
 		}
 	}
-	if len(t.Session.SignupSession.Model) == 0 {
-		return errors.New("Unable To Add Courses")
+	if len(t.Session.SignupSession.Models) == 0 {
+		return errors.New("No courses to add or drop")
 	}
 	return nil
 }
@@ -303,7 +352,7 @@ func (t *Task) SendBatch() error {
 	}
 
 	batch := Batch{
-		Update:          []map[string]interface{}{t.Session.SignupSession.Model},
+		Update:          t.Session.SignupSession.Models,
 		UniqueSessionId: t.Session.UniqueSessionId,
 	}
 
@@ -324,7 +373,9 @@ func (t *Task) SendBatch() error {
 	}
 
 	for _, data := range changes.Data.Update {
-		for _, courseReferenceNumber := range t.CRNs {
+		// Check against both added and dropped CRNs
+		allCRNs := append(t.CRNs, t.DropCRNs...)
+		for _, courseReferenceNumber := range allCRNs {
 			if data.CourseReferenceNumber == courseReferenceNumber {
 				if data.StatusDescription == "Registered" {
 					fmt.Printf("[%s - %s %s - %s] - Successfully Registered\n", data.CourseReferenceNumber, data.Subject, data.CourseNumber, data.CourseTitle)
@@ -332,11 +383,16 @@ func (t *Task) SendBatch() error {
 				} else if data.StatusDescription == "Waitlisted" {
 					fmt.Printf("[%s - %s %s - %s] - Successfully Waitlisted\n", data.CourseReferenceNumber, data.Subject, data.CourseNumber, data.CourseTitle)
 					t.SendNotification(data.CourseTitle, fmt.Sprintf("Successful Waitlisted (%s)", data.CourseReferenceNumber))
+				} else if data.StatusDescription == "Deleted" || data.StatusDescription == "Dropped" || data.StatusDescription == "Web Drop" {
+					fmt.Printf("[%s - %s %s - %s] - Successfully Dropped\n", data.CourseReferenceNumber, data.Subject, data.CourseNumber, data.CourseTitle)
+					t.SendNotification(data.CourseTitle, fmt.Sprintf("Successful Drop (%s)", data.CourseReferenceNumber))
 				} else if data.StatusDescription == "Errors Preventing Registration" {
-					fmt.Printf("[%d] - Errors encountered adding [%s - %s %s - %s]\n", len(data.CrnErrors), data.CourseReferenceNumber, data.Subject, data.CourseNumber, data.CourseTitle)
+					fmt.Printf("[%d] - Errors encountered processing [%s - %s %s - %s]\n", len(data.CrnErrors), data.CourseReferenceNumber, data.Subject, data.CourseNumber, data.CourseTitle)
 					for _, err := range data.CrnErrors {
 						fmt.Printf("%s\n", err.Message)
 					}
+				} else {
+					fmt.Printf("[%s] Status: %s\n", data.CourseReferenceNumber, data.StatusDescription)
 				}
 			}
 		}
