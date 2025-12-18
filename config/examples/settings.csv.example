@@ -1,2 +1,3 @@
-Term,Subject,Mode,CRNs,SavedRegistrationTime
-2026 Winter Foothill,PHYS,Watch,"32425,",
+Term,Subject,Mode,CRNs,SavedRegistrationTime,DropCRNs
+2026 Winter Foothill,PHYS,Watch,"32425,",,
+2026 Winter De Anza,MATH,Watch,"38894,",,32425
